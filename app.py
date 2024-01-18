@@ -3,30 +3,30 @@ from flask_cors import cross_origin
 import sklearn
 import pickle
 import pandas as pd
-from cassandra.cluster import Cluster
+# from cassandra.cluster import Cluster
 import uuid
 from datetime import datetime
 
 app = Flask(__name__)
 
 # Cassandra connection
-cassandra_host = "cassandra"  # Service name from docker-compose.yml
-cluster = Cluster([cassandra_host])
-session = cluster.connect("flight_prediction_keyspace")
+# cassandra_host = "cassandra"  # Service name from docker-compose.yml
+# cluster = Cluster([cassandra_host])
+# session = cluster.connect("flight_prediction_keyspace")
 
 # Define the flights table
-session.execute("""
-    CREATE TABLE IF NOT EXISTS flights (
-        flight_id UUID PRIMARY KEY,
-        departure_date TIMESTAMP,
-        arrival_date TIMESTAMP,
-        source text,
-        destination text,
-        stopover text,
-        airline text,
-        prediction text
-    )
-""")
+# session.execute("""
+#     CREATE TABLE IF NOT EXISTS flights (
+#         flight_id UUID PRIMARY KEY,
+#         departure_date TIMESTAMP,
+#         arrival_date TIMESTAMP,
+#         source text,
+#         destination text,
+#         stopover text,
+#         airline text,
+#         prediction text
+#     )
+# """)
 
 
 
@@ -38,9 +38,6 @@ model = pickle.load(open("flight_price_rf.pkl", "rb"))
 @cross_origin()
 def home():
     return render_template("index.html")
-
-
-
 
 @app.route("/predict", methods = ["GET", "POST"])
 @cross_origin()
@@ -394,12 +391,12 @@ def predict():
         flight_id = uuid.uuid4()
 
         # Insert the data into the Cassandra table
-        session.execute("""
-                INSERT INTO flights (flight_id, departure_date, arrival_date, source, destination, stopover, airline, prediction)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (flight_id, datetime.strptime(departure_date, "%Y-%m-%dT%H:%M"),
-                  datetime.strptime(arrival_date, "%Y-%m-%dT%H:%M"), source, destination, stopover, airline,
-                  output))
+        # session.execute("""
+        #         INSERT INTO flights (flight_id, departure_date, arrival_date, source, destination, stopover, airline, prediction)
+        #         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        #     """, (flight_id, datetime.strptime(departure_date, "%Y-%m-%dT%H:%M"),
+        #           datetime.strptime(arrival_date, "%Y-%m-%dT%H:%M"), source, destination, stopover, airline,
+        #           output))
 
         return render_template('index.html',prediction_text="Your Flight price is Rs. {}".format(output))
 

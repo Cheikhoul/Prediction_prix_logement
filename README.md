@@ -17,21 +17,20 @@ The following points were the objective of the project (The main intention was t
 
 ## Technical Aspect
 Training a machine learning model using scikit-learn.
-Building and hosting a Flask web app on Heroku.
-A user has to put details like Depature date, destination, source,.. .
-Once it get all the fields information , the prediction is displayed.
+Building and hosting a Flask web app.
+A user has to put details like Depature date, destination, source, etc.
+Once it gets all the fields information, the prediction is displayed.
 
 ## Technologies Used
 - Python (Numpy, Pandas, seaborn, sklearn, ...)
 - Flask
-- Heruko
-
-## Heruko WebApp link:
-https://predictprices-app.herokuapp.com
-
 
 ## Contributors
-Hasnae Talibi
+Gael GNAHUI
+Khady NDAO
+Cheikhoul Khadim SECK
+Hasnae TALIBI
+Jordan TOKO
 
 
 
