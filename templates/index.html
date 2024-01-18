@@ -29,9 +29,9 @@
 				<h2>Predict The Flight Ticket Price</h2>
 				<p>
                  
-                You love traveling and you want to discovre new cultures , new places....in India. But you have no clue about how much the tickets cost.
-                So welcome to our website Flight Prices .
-                Fill the formula below and get an idea about the price.
+                You love traveling and you want to discover new cultures, new places....in India, but you have no clue about how much the tickets cost.
+                So welcome to our website Flight Prices.
+                Fill up the form below and get an idea about your flight's price.
             </p>
 
 
@@ -40,7 +40,6 @@
         	<form action="\predict" method="post">
 
             <div class='container1'>
-         
         	    <div class='case1'>
         		    <h5 >Departure Date</h5>
                     <input type="datetime-local" name="Dep_Time" id='Dep_Time' required='required'/>
@@ -108,13 +107,25 @@
                     </select>
         	    </div>
         	 </div>
+			<div class='container4'>
+				<div class='case1'>
+        		    <h5> First Name </h5>
+                    <input type="text" name="Passenger_FirstName" id='Passenger_FirstName' required='required'/>
+        	    </div>
+        	    <div class='case2'>
+        		    <h5 >Last Name </h5>
+        		    <input type="text" name="Passenger_LastName" id='Passenger_LastName' required='required'/>
+        	    </div>
+			</div>
         	 <br/>
         	 <br/>
         	 
         	     <input type="submit" value="Predict" id="submit" >
         	 
         	 </form> 
-        </div> 
+        
+			
+			</div> 
 
         <div class='Predict'>
              <h3 >{{ prediction_text }}</h3>
