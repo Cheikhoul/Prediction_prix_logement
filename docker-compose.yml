@@ -1,0 +1,24 @@
+version: '3'
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra-container
+    ports:
+      - "9042:9042"  # Cassandra port
+    volumes:
+      - ./schema.cql:/docker-entrypoint-initdb.d/schema.cql  # Mount the schema file into the container
+    entrypoint: [ "sh", "-c", "sleep 15 && /docker-entrypoint.sh cassandra -f" ]
+    command: [ "cassandra", "-f" ]
+
+
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Your Dockerfile for the Flask app
+    container_name: flask-app-container
+    ports:
+      - "5000:5000"  # Flask app port
+    depends_on:
+      - cassandra  # Ensure Cassandra is running before starting the Flask app
+    environment:
+      - CASSANDRA_HOST=cassandra  # Use the service name as the hostname for Cassandra
