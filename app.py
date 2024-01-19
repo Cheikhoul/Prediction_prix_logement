@@ -1,6 +1,10 @@
 from flask import Flask, request, render_template
 from flask_cors import cross_origin
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import OperationalError
+import pymysql
 import sklearn
 import pickle
 import pandas as pd
@@ -12,33 +16,37 @@ app = Flask(__name__)
 
 model = pickle.load(open("flight_price_rf.pkl", "rb"))
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'cheikhoul'
-app.config['MYSQL_PASSWORD'] = '09121968.'
-app.config['MYSQL_DB'] = 'flight_predictions'
- 
-mysql = MySQL(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:09121968.@localhost/'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-#Creating a connection cursor
-cursor = mysql.connection.cursor()
-cursor.execute(''' CREATE DATABASE IF NOT EXITS flight_predictions; ''')
-cursor.execute(''' USE DATABASE flight_predictions; ''')
-cursor.execute(''' CREATE TABLE IF NOT EXISTS data(
-                flightId uniqueidentifier PRIMARY KEY,
-                departure_date datetime2,
-                arrival_date datetime2,
-                source varchar(255)
-                destination varchar(255),
-                stops int, 
-                air_company varchar(255), 
-                passenger_firstname varchar(255),
-                passenger_firstname varchar(255),
-                flight_price_predicted float
-); ''')
-#Saving the Actions performed on the DB
-mysql.connection.commit(
-#Closing the cursor
-cursor.close()
+# Create a SQLAlchemy object
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Define the data model
+class Data(db.Model):
+    __tablename__ = 'data'
+    __table_args__ = {'schema': 'flight_predictions'}  
+    flight_id = db.Column(db.String(255), primary_key=True, unique=True)
+    departure_date = db.Column(db.DateTime)
+    arrival_date = db.Column(db.DateTime)
+    source = db.Column(db.String(255))
+    destination = db.Column(db.String(255))
+    stops = db.Column(db.Integer)
+    air_company = db.Column(db.String(255))
+    passenger_firstname = db.Column(db.String(255))
+    passenger_lastname = db.Column(db.String(255))
+    flight_price_predicted = db.Column(db.Float)
+
+with app.app_context():
+    # if the database exists we just change the database and get ready to make changes 
+    try:
+        db.session.execute(text('USE flight_predictions;'))
+    # if the database doesn't exist we create the database, change the database and create the relevant tables
+    except OperationalError:
+        db.session.execute(text('CREATE DATABASE flight_predictions;'))
+        db.session.execute(text('USE flight_predictions;'))    
+        db.metadata.create_all(bind=db.engine, checkfirst=False)
 
 @app.route("/")
 @cross_origin()
@@ -342,18 +350,27 @@ def predict():
 
         output=round(prediction[0],2)
 
-        # Generate unique identifiers for the flight and user
+        # Generate unique identifiers for a user's flight price prediction 
         flight_id = uuid.uuid4()
 
-        cursor = mysql.connection.cursor()
+        data_entry = Data(
+            flight_id=flight_id,
+            departure_date=date_dep, 
+            arrival_date=date_arr,
+            source=Source,
+            destination=Destination,
+            stops=Total_stops,
+            air_company=airline,
+            passenger_firstname=passenger_firstname,
+            passenger_lastname=passenger_lastname,
+            flight_price_predicted=output
+        )
 
-        cursor.execute(''' INSERT INTO data (flightId, departure_date, arrival_date, source, destination, stops) VALUES (); ''')
+        # Add the data_entry to the session and commit the changes to the database
+        db.session.execute(text('USE flight_predictions;'))
+        db.session.add(data_entry)
+        db.session.commit()
 
-        #Saving the Actions performed on the DB
-        mysql.connection.commit()
-
-        #Closing the cursor
-        cursor.close()
         return render_template('index.html',prediction_text="Your Flight price is Rs. {}".format(output))
 
     return render_template("index.html")
