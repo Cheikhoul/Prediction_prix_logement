@@ -34,8 +34,3 @@ Khady NDAO
 Cheikhoul Khadim SECK
 Hasnae TALIBI
 Jordan TOKO
-
-
-
-    
-
