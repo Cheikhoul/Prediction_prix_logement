@@ -1,38 +1,52 @@
 from flask import Flask, request, render_template
 from flask_cors import cross_origin
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import OperationalError
+import pymysql
 import sklearn
 import pickle
 import pandas as pd
-# from cassandra.cluster import Cluster
+
 import uuid
 from datetime import datetime
 
 app = Flask(__name__)
 
-# Cassandra connection
-# cassandra_host = "cassandra"  # Service name from docker-compose.yml
-# cluster = Cluster([cassandra_host])
-# session = cluster.connect("flight_prediction_keyspace")
-
-# Define the flights table
-# session.execute("""
-#     CREATE TABLE IF NOT EXISTS flights (
-#         flight_id UUID PRIMARY KEY,
-#         departure_date TIMESTAMP,
-#         arrival_date TIMESTAMP,
-#         source text,
-#         destination text,
-#         stopover text,
-#         airline text,
-#         prediction text
-#     )
-# """)
-
-
-
 model = pickle.load(open("flight_price_rf.pkl", "rb"))
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:09121968.@localhost/'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Create a SQLAlchemy object
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Define the data model
+class Data(db.Model):
+    __tablename__ = 'data'
+    __table_args__ = {'schema': 'flight_predictions'}  
+    flight_id = db.Column(db.String(255), primary_key=True, unique=True)
+    departure_date = db.Column(db.DateTime)
+    arrival_date = db.Column(db.DateTime)
+    source = db.Column(db.String(255))
+    destination = db.Column(db.String(255))
+    stops = db.Column(db.Integer)
+    air_company = db.Column(db.String(255))
+    passenger_firstname = db.Column(db.String(255))
+    passenger_lastname = db.Column(db.String(255))
+    flight_price_predicted = db.Column(db.Float)
+
+with app.app_context():
+    # if the database exists we just change the database and get ready to make changes 
+    try:
+        db.session.execute(text('USE flight_predictions;'))
+    # if the database doesn't exist we create the database, change the database and create the relevant tables
+    except OperationalError:
+        db.session.execute(text('CREATE DATABASE flight_predictions;'))
+        db.session.execute(text('USE flight_predictions;'))    
+        db.metadata.create_all(bind=db.engine, checkfirst=False)
 
 @app.route("/")
 @cross_origin()
@@ -44,34 +58,33 @@ def home():
 def predict():
     if request.method == "POST":
 
+        # Passenger First Name
+        passenger_firstname = request.form["Passenger_FirstName"]
+
+        # Passenger Last Name
+        passenger_lastname = request.form["Passenger_LastName"]
+
         # Date_of_Journey
         date_dep = request.form["Dep_Time"]
         Journey_day = int(pd.to_datetime(date_dep, format="%Y-%m-%dT%H:%M").day)
         Journey_month = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").month)
-        # print("Journey Date : ",Journey_day, Journey_month)
 
         # Departure
         Dep_hour = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").hour)
         Dep_min = int(pd.to_datetime(date_dep, format ="%Y-%m-%dT%H:%M").minute)
-        # print("Departure : ",Dep_hour, Dep_min)
 
         # Arrival
         date_arr = request.form["Arrival_Time"]
         Arrival_hour = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").hour)
         Arrival_min = int(pd.to_datetime(date_arr, format ="%Y-%m-%dT%H:%M").minute)
-        # print("Arrival : ", Arrival_hour, Arrival_min)
 
         # Duration
         dur_hour = abs(Arrival_hour - Dep_hour)
         dur_min = abs(Arrival_min - Dep_min)
-        # print("Duration : ", dur_hour, dur_min)
 
         # Total Stops
         Total_stops = int(request.form["Stops"])
-        # print(Total_stops)
 
-        # Airline
-        # AIR ASIA = 0 (not in column)
         airline=request.form['Airline']
         if(airline=='Jet Airways'):
             Jet_Airways = 1
@@ -229,20 +242,6 @@ def predict():
             Vistara_Premium_economy = 0
             Trujet = 0
 
-        # print(Jet_Airways,
-        #     IndiGo,
-        #     Air_India,
-        #     Multiple_carriers,
-        #     SpiceJet,
-        #     Vistara,
-        #     GoAir,
-        #     Multiple_carriers_Premium_economy,
-        #     Jet_Airways_Business,
-        #     Vistara_Premium_economy,
-        #     Trujet)
-
-        # Source
-        # Banglore = 0 (not in column)
         Source = request.form["Source"]
         if (Source == 'Delhi'):
             s_Delhi = 1
@@ -274,13 +273,6 @@ def predict():
             s_Mumbai = 0
             s_Chennai = 0
 
-        # print(s_Delhi,
-        #     s_Kolkata,
-        #     s_Mumbai,
-        #     s_Chennai)
-
-        # Destination
-        # Banglore = 0 (not in column)
         Destination = request.form["Destination"]
         if (Destination == 'Cochin'):
             d_Cochin = 1
@@ -323,26 +315,6 @@ def predict():
             d_New_Delhi = 0
             d_Hyderabad = 0
             d_Kolkata = 0
-
-        # print(
-        #     d_Cochin,
-        #     d_Delhi,
-        #     d_New_Delhi,
-        #     d_Hyderabad,
-        #     d_Kolkata
-        # )
-        
-
-    #     ['Total_Stops', 'Journey_day', 'Journey_month', 'Dep_hour',
-    #    'Dep_min', 'Arrival_hour', 'Arrival_min', 'Duration_hours',
-    #    'Duration_mins', 'Airline_Air India', 'Airline_GoAir', 'Airline_IndiGo',
-    #    'Airline_Jet Airways', 'Airline_Jet Airways Business',
-    #    'Airline_Multiple carriers',
-    #    'Airline_Multiple carriers Premium economy', 'Airline_SpiceJet',
-    #    'Airline_Trujet', 'Airline_Vistara', 'Airline_Vistara Premium economy',
-    #    'Source_Chennai', 'Source_Delhi', 'Source_Kolkata', 'Source_Mumbai',
-    #    'Destination_Cochin', 'Destination_Delhi', 'Destination_Hyderabad',
-    #    'Destination_Kolkata', 'Destination_New Delhi']
         
         prediction=model.predict([[
             Total_stops,
@@ -378,33 +350,30 @@ def predict():
 
         output=round(prediction[0],2)
 
-        # Get user inpu
-        # t from the form
-        departure_date = date_dep
-        arrival_date = date_arr
-        source = Source
-        destination = Destination
-        stopover = Total_stops
-        airline = airline
-
-        # Generate unique identifiers for the flight and user
+        # Generate unique identifiers for a user's flight price prediction 
         flight_id = uuid.uuid4()
 
-        # Insert the data into the Cassandra table
-        # session.execute("""
-        #         INSERT INTO flights (flight_id, departure_date, arrival_date, source, destination, stopover, airline, prediction)
-        #         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        #     """, (flight_id, datetime.strptime(departure_date, "%Y-%m-%dT%H:%M"),
-        #           datetime.strptime(arrival_date, "%Y-%m-%dT%H:%M"), source, destination, stopover, airline,
-        #           output))
+        data_entry = Data(
+            flight_id=flight_id,
+            departure_date=date_dep, 
+            arrival_date=date_arr,
+            source=Source,
+            destination=Destination,
+            stops=Total_stops,
+            air_company=airline,
+            passenger_firstname=passenger_firstname,
+            passenger_lastname=passenger_lastname,
+            flight_price_predicted=output
+        )
+
+        # Add the data_entry to the session and commit the changes to the database
+        db.session.execute(text('USE flight_predictions;'))
+        db.session.add(data_entry)
+        db.session.commit()
 
         return render_template('index.html',prediction_text="Your Flight price is Rs. {}".format(output))
 
-
     return render_template("index.html")
-
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)
