@@ -23,11 +23,12 @@ Building and hosting a Flask web app.
 A user has to put details like Depature date, destination, source, etc.
 Once it gets all the fields information, the prediction is displayed and then logged with the user information in the database.
 
-## Technologies Used
+## Tools & Technologies Used
 - Python (Numpy, Pandas, seaborn, sklearn, ...)
 - Flask
 - SQLAlchemy
 - Docker
+- Trello : https://trello.com/b/FirQe1M4/pr%C3%A9diction-prix-logement
 
 ## Contributors
 - Gael GNAHUI
