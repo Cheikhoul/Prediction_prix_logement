@@ -27,10 +27,17 @@ Once it gets all the fields information, the prediction is displayed and then lo
 - Python (Numpy, Pandas, seaborn, sklearn, ...)
 - Flask
 - SQLAlchemy
+- Docker
 
 ## Contributors
-Gael GNAHUI
-Khady NDAO
-Cheikhoul Khadim SECK
-Hasnae TALIBI
-Jordan TOKO
+- Gael GNAHUI
+- Khady NDAO
+- Cheikhoul Khadim SECK
+- Hasnae TALIBI
+- Jordan TOKO
+
+## How to run the project ? 
+All the microservices are within docker containers, all you need to do is to run the following commands : 
+- docker-compose build
+- docker-compose up
+And the website should be available at this address http://127.0.0.1:5000

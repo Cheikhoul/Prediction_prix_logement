@@ -4,19 +4,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import OperationalError
-import pymysql
-import sklearn
 import pickle
-import pandas as pd
-
+import sklearn
 import uuid
-from datetime import datetime
+import pandas as pd
 
 app = Flask(__name__)
 
 model = pickle.load(open("flight_price_rf.pkl", "rb"))
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:09121968.@localhost/'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:09121968.@flight_predictions_db/'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Create a SQLAlchemy object
@@ -376,4 +373,4 @@ def predict():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
