@@ -39,6 +39,6 @@ Once it gets all the fields information, the prediction is displayed and then lo
 
 ## How to run the project ? 
 All the microservices are within docker containers, all you need to do is to run the following commands : 
-- docker-compose build
-- docker-compose up
+- docker compose build
+- docker compose up
 And the website should be available at this address http://127.0.0.1:5000
